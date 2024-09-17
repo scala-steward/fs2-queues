@@ -14,32 +14,24 @@
  * limitations under the License.
  */
 
-package com.commercetools.queue.pubsub
+package com.commercetools.queue.servicebus
 
 import cats.effect.{IO, Resource}
+import com.azure.identity.AzureCliCredentialBuilder
 import com.commercetools.queue.QueueClient
-import com.commercetools.queue.gcp.pubsub.PubSubClient
+import com.commercetools.queue.azure.servicebus.ServiceBusClient
 import com.commercetools.queue.testkit.QueueClientSuite
-import com.google.api.gax.core.NoCredentialsProvider
 
-class PubSubClientSuite extends QueueClientSuite {
+class ServiceBusClientSuite extends QueueClientSuite {
 
-  override val queueUpdateSupported = false
+  private def config = string("AZURE_SERVICEBUS_HOSTNAME")
   override val inFlightMessagesStatsSupported: Boolean = false
-  override val delayedMessagesStatsSupported: Boolean = false
-
-  private def config =
-    booleanOrDefault("GCP_PUBSUB_USE_EMULATOR", default = true).ifM(
-      ifTrue = IO.pure(("test-project", NoCredentialsProvider.create(), Some("http://localhost:8042"))),
-      ifFalse = for {
-        project <- string("GCP_PUBSUB_PROJECT")
-        credentials = NoCredentialsProvider.create() // TODO
-      } yield (project, credentials, None)
-    )
 
   override def client: Resource[IO, QueueClient[IO]] =
-    config.toResource.flatMap { case (project, credentials, endpoint) =>
-      PubSubClient(project, credentials, endpoint = endpoint)
+    config.toResource.flatMap { namespace =>
+      ServiceBusClient[IO](
+        namespace = namespace,
+        credentials = new AzureCliCredentialBuilder().build()
+      )
     }
-
 }
