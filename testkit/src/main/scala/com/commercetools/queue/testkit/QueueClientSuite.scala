@@ -29,6 +29,7 @@ abstract class QueueClientSuite
 
   /** Override these if the given provider is not supporting these features */
   val queueUpdateSupported: Boolean = true
+  val messagesStatsSupported: Boolean = true
   val inFlightMessagesStatsSupported: Boolean = true
   val delayedMessagesStatsSupported: Boolean = true
 

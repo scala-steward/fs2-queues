@@ -25,7 +25,7 @@ import com.commercetools.queue.testkit.QueueClientSuite
 class ServiceBusClientSuite extends QueueClientSuite {
 
   private def config = string("AZURE_SERVICEBUS_HOSTNAME")
-  override val inFlightMessagesStatsSupported: Boolean = false
+  override val inFlightMessagesStatsSupported: Boolean = false // not supported
 
   override def client: Resource[IO, QueueClient[IO]] =
     config.toResource.flatMap { namespace =>

@@ -13,6 +13,7 @@ import scala.concurrent.duration.DurationInt
 trait QueuePublisherSuite extends CatsEffectSuite { self: QueueClientSuite =>
 
   withQueue.test("sink publishes all the messages") { queueName =>
+    assume(messagesStatsSupported)
     val client = clientFixture()
     for {
       msgs <- randomMessages(30)
@@ -27,7 +28,7 @@ trait QueuePublisherSuite extends CatsEffectSuite { self: QueueClientSuite =>
   }
 
   withQueue.test("sink publishes all the messages with a delay") { queueName =>
-    assume(delayedMessagesStatsSupported, "The test environment does not support delayed messages stats")
+    assume(messagesStatsSupported && delayedMessagesStatsSupported)
     val client = clientFixture()
     for {
       msgs <- randomMessages(30)

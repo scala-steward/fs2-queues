@@ -110,8 +110,13 @@ trait QueueSubscriberSuite extends CatsEffectSuite { self: QueueClientSuite =>
             else true
         }
       }.void)
-      remaining <- client.statistics(queueName).fetcher.use(_.fetch).map(_.messages)
-      _ = assertEquals(remaining, 0, "not all the messages got acked")
+      _ <-
+        if (messagesStatsSupported)
+          assertIO(
+            client.statistics(queueName).fetcher.use(_.fetch).map(_.messages),
+            0,
+            "not all the messages got acked")
+        else IO.unit
     } yield ()
   }
 
@@ -137,9 +142,17 @@ trait QueueSubscriberSuite extends CatsEffectSuite { self: QueueClientSuite =>
       toBeNacked <- toBeNackedRef.get
       _ = assertEquals(toBeAcked, Set("0", "2", "4", "6", "8"))
       _ = assertEquals(toBeNacked, Set("1", "3", "5", "7", "9"))
-      stats <- client.statistics(queueName).fetcher.use(_.fetch)
-      // it may take a while to move the inflight messages back
-      _ = assert(stats.messages + stats.inflight.getOrElse(0) == 5, "not all the expected messages got nacked")
+      _ <-
+        if (messagesStatsSupported)
+          assertIOBoolean(
+            client
+              .statistics(queueName)
+              .fetcher
+              .use(_.fetch)
+              .map(stats => stats.messages + stats.inflight.getOrElse(0) == 5),
+            "not all the expected messages got nacked"
+          )
+        else IO.unit
     } yield ()
   }
 

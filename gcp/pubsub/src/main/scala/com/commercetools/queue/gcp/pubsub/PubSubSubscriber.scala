@@ -21,12 +21,11 @@ import cats.syntax.functor._
 import com.commercetools.queue.{Deserializer, QueuePuller, UnsealedQueueSubscriber}
 import com.google.api.gax.core.CredentialsProvider
 import com.google.api.gax.rpc.TransportChannelProvider
-import com.google.cloud.pubsub.v1.stub.{GrpcSubscriberStub, HttpJsonSubscriberStub, SubscriberStubSettings}
+import com.google.cloud.pubsub.v1.stub.{GrpcSubscriberStub, SubscriberStubSettings}
 import com.google.pubsub.v1.{GetSubscriptionRequest, SubscriptionName}
 
 private class PubSubSubscriber[F[_], T](
   val queueName: String,
-  useGrpc: Boolean,
   subscriptionName: SubscriptionName,
   channelProvider: TransportChannelProvider,
   credentials: CredentialsProvider,
@@ -40,19 +39,12 @@ private class PubSubSubscriber[F[_], T](
     Resource
       .fromAutoCloseable {
         F.blocking {
-          val builder =
-            if (useGrpc)
-              SubscriberStubSettings.newBuilder()
-            else
-              SubscriberStubSettings.newHttpJsonBuilder()
-          builder
+          val builder = SubscriberStubSettings
+            .newBuilder()
             .setCredentialsProvider(credentials)
             .setTransportChannelProvider(channelProvider)
-          endpoint.foreach(builder.setEndpoint(_))
-          if (useGrpc)
-            GrpcSubscriberStub.create(builder.build())
-          else
-            HttpJsonSubscriberStub.create(builder.build())
+          endpoint.foreach(builder.setEndpoint)
+          GrpcSubscriberStub.create(builder.build())
         }
       }
       .evalMap { subscriber =>
@@ -63,7 +55,7 @@ private class PubSubSubscriber[F[_], T](
           sub => (subscriber, sub))
       }
       .map { case (subscriber, subscription) =>
-        new PubSubPuller[F, T](queueName, useGrpc, subscriptionName, subscriber, subscription.getAckDeadlineSeconds())
+        new PubSubPuller[F, T](queueName, subscriptionName, subscriber, subscription.getAckDeadlineSeconds())
       }
 
 }

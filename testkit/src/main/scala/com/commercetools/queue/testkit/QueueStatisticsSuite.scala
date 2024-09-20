@@ -14,6 +14,7 @@ import scala.concurrent.duration.DurationInt
 trait QueueStatisticsSuite extends CatsEffectSuite { self: QueueClientSuite =>
 
   withQueue.test("stats should report queued messages") { queueName =>
+    assume(messagesStatsSupported)
     for {
       messages <- randomMessages(30)
       client = clientFixture()
@@ -39,7 +40,7 @@ trait QueueStatisticsSuite extends CatsEffectSuite { self: QueueClientSuite =>
   }
 
   withQueue.test("stats should report inflight messages") { queueName =>
-    assume(inFlightMessagesStatsSupported, "The test environment does not support in-flight messages stats")
+    assume(messagesStatsSupported && inFlightMessagesStatsSupported)
     for {
       messages <- randomMessages(30)
       client = clientFixture()
@@ -59,7 +60,7 @@ trait QueueStatisticsSuite extends CatsEffectSuite { self: QueueClientSuite =>
   }
 
   withQueue.test("stats should report delayed messages") { queueName =>
-    assume(delayedMessagesStatsSupported, "The test environment does not support delayed messages stats")
+    assume(messagesStatsSupported && delayedMessagesStatsSupported)
     for {
       messages <- randomMessages(30)
       client = clientFixture()
