@@ -35,6 +35,37 @@ class SubscriberSuite extends CatsEffectSuite {
         (queue, TestQueueSubscriber(queue), TestQueuePublisher(queue))
       })
 
+  queueSub.test("Successful message batch must be acked") { case (queue, subscriber, _) =>
+    TestControl
+      .executeEmbed(for {
+        // first populate the queue
+        messages <- List.range(0, 5).traverse { i =>
+          IO.sleep(10.millis) *> IO.realTimeInstant.map(TestMessage(s"message-$i", _))
+        }
+        _ <- queue.setAvailableMessages(messages)
+        // then process messages in batches of 5
+        // processing is (virtually) instantaneous in this case,
+        // so messages are immediately acked, from the mocked time PoV
+        // however, receiving messages waits for the amount of provided `waitingTime`
+        // in the test queue implementation, event if enough messages are available
+        // so this step makes time progress in steps of `waitingTime`
+        result <- subscriber
+          .messageBatch(batchSize = 5, waitingTime = 40.millis)
+          .evalTap(_.nackAll)
+          .map(batch => IO.pure(batch.messages.size))
+          .interruptAfter(3.seconds)
+          .compile
+          .foldMonoid
+      } yield result)
+      .flatMap { _ =>
+        for {
+          _ <- assertIO(queue.getAvailableMessages, Nil)
+          _ <- assertIO(queue.getLockedMessages, Nil)
+          _ <- assertIO(queue.getDelayedMessages, Nil)
+        } yield ()
+      }
+  }
+
   queueSub.test("Successful messages must be acked") { case (queue, subscriber, _) =>
     TestControl
       .executeEmbed(for {

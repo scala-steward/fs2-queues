@@ -17,9 +17,9 @@
 package com.commercetools.queue.otel4s
 
 import cats.effect.Temporal
-import cats.effect.syntax.monadCancel._
-import cats.syntax.functor._
-import com.commercetools.queue.{MessageContext, QueuePuller, UnsealedQueuePuller}
+import cats.effect.syntax.monadCancel.*
+import cats.syntax.functor.*
+import com.commercetools.queue.{MessageBatch, MessageContext, QueuePuller, UnsealedQueuePuller}
 import fs2.Chunk
 import org.typelevel.otel4s.trace.Tracer
 
@@ -44,4 +44,5 @@ private class MeasuringQueuePuller[F[_], T](
       }
       .guaranteeCase(metrics.receive)
 
+  override def pullRealBatch(batchSize: Int, waitingTime: FiniteDuration): F[MessageBatch[F, T]] = ???
 }

@@ -42,6 +42,7 @@ sealed trait QueuePuller[F[_], T] {
    * methods.
    */
   def pullBatch(batchSize: Int, waitingTime: FiniteDuration): F[Chunk[MessageContext[F, T]]]
+  def pullRealBatch(batchSize: Int, waitingTime: FiniteDuration): F[MessageBatch[F, T]]
 
 }
 

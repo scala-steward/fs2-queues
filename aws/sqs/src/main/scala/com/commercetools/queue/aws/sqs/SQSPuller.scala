@@ -17,11 +17,11 @@
 package com.commercetools.queue.aws.sqs
 
 import cats.effect.Async
-import cats.effect.syntax.concurrent._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
-import cats.syntax.monadError._
-import com.commercetools.queue.{Deserializer, MessageContext, UnsealedQueuePuller}
+import cats.effect.syntax.concurrent.*
+import cats.syntax.flatMap.*
+import cats.syntax.functor.*
+import cats.syntax.monadError.*
+import com.commercetools.queue.{Deserializer, MessageBatch, MessageContext, UnsealedQueuePuller}
 import fs2.Chunk
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{MessageSystemAttributeName, ReceiveMessageRequest}
@@ -29,7 +29,7 @@ import software.amazon.awssdk.services.sqs.model.{MessageSystemAttributeName, Re
 import java.time.Instant
 import scala.annotation.nowarn
 import scala.concurrent.duration.FiniteDuration
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 private class SQSPuller[F[_], T](
   val queueName: String,
@@ -42,6 +42,9 @@ private class SQSPuller[F[_], T](
   extends UnsealedQueuePuller[F, T] {
 
   override def pullBatch(batchSize: Int, waitingTime: FiniteDuration): F[Chunk[MessageContext[F, T]]] =
+    pullInternal(batchSize, waitingTime).widen[Chunk[MessageContext[F, T]]]
+
+  private def pullInternal(batchSize: Int, waitingTime: FiniteDuration): F[Chunk[SQSMessageContext[F, T]]] =
     F.fromCompletableFuture {
       F.delay {
         // visibility timeout is at queue creation time
@@ -88,6 +91,9 @@ private class SQSPuller[F[_], T](
               )
             }
         }
-    }.widen[Chunk[MessageContext[F, T]]]
-      .adaptError(makePullQueueException(_, queueName))
+    }.adaptError(makePullQueueException(_, queueName))
+
+  override def pullRealBatch(batchSize: Int, waitingTime: FiniteDuration): F[MessageBatch[F, T]] =
+    pullInternal(batchSize, waitingTime)
+      .map(new SQSMessageBatch[F, T](_, client, queueUrl))
 }
