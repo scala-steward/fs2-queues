@@ -125,8 +125,7 @@
   ???
 }</span></code></pre>
         <p>The client is managed, meaning that it uses a dedicated HTTP connection pool that will get shut down upon resource release.
-        The client accepts a <code>PubSubConfig</code> object that allows you to configure the prefix for the subscription name. if not provided it will use the default prefix <code>fs2-queues-</code> to avoid collisions.
-        You can also omit entirely the prefix by setting it to <code>None</code>.</p>
+        The client accepts a <code>PubSubConfig</code> object that allows you to configure the prefix (defaults to <code>fs2-queues-</code>) and the suffix (defaults to <code>-sub</code>) for the subscription name, and a map of labels to annotate each topic and subscription that is created and updated.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">commercetools</span><span>.</span><span class="identifier">queue</span><span>.</span><span class="identifier">gcp</span><span>.</span><span class="identifier">pubsub</span><span>.</span><span class="identifier">_</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">google</span><span>.</span><span class="identifier">api</span><span>.</span><span class="identifier">gax</span><span>.</span><span class="identifier">core</span><span>.</span><span class="type-name">GoogleCredentialsProvider</span><span>

@@ -124,7 +124,8 @@
 </span><span class="type-name">SQSClient</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">region</span><span>, </span><span class="identifier">credentials</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">client</span><span> =&gt;
   ???
 }</span></code></pre>
-        <p>The client is managed, meaning that it uses a dedicated HTTP connection pool that will get shut down upon resource release.</p>
+        <p>The client is managed, meaning that it uses a dedicated HTTP connection pool that will get shut down upon resource release.
+        The client accepts a <code>SQSConfig</code> object that allows you to configure a map of tags to annotate each queue.</p>
         <p>If integrating with an existing code base where you already have an instance of <code>SdkAsyncHttpClient</code> that you would like to share, you can pass the optional <code>httpClient</code> parameter. If passed explicitly, the client is not closed when the resource is released, and it is up to the caller to manage it.</p>
         <p>For full customization, you can supply your own instance of <code>SqsAsyncClient</code> by using <code>SQSClient.fromClient</code>. Note that this requires explicit management of the underlying client&#39;s lifecycle.</p>
 
